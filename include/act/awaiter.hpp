@@ -9,7 +9,6 @@
 
 #include <functional>
 #include <type_traits>
-#include <stdex/coroutine/core.hpp>
 #include <boost/system/system_error.hpp>
 
 namespace act { namespace detail
@@ -41,9 +40,10 @@ namespace act
             return false;
         }
 
-        void await_suspend(stdex::coroutine_handle<> cb)
+        template<class F>
+        void await_suspend(F&& cb)
         {
-            _f([this, cb](boost::system::error_code ec, T val)
+            _f([this, cb=std::forward<F>(cb)](boost::system::error_code ec, T val)
             {
                 _ec = ec;
                 _val = val;
@@ -70,9 +70,10 @@ namespace act
             return false;
         }
 
-        void await_suspend(stdex::coroutine_handle<> cb)
+        template<class F>
+        void await_suspend(F&& cb)
         {
-            _f([&_ec = _ec, cb](boost::system::error_code ec)
+            _f([&_ec=_ec, cb=std::forward<F>(cb)](boost::system::error_code ec)
             {
                 _ec = ec;
                 cb();
