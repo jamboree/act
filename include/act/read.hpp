@@ -10,6 +10,9 @@
 #include <cstdint>
 #include <act/awaiter.hpp>
 #include <boost/asio/basic_streambuf_fwd.hpp>
+#include <boost/asio/read.hpp>
+#include <boost/asio/read_at.hpp>
+#include <boost/asio/read_until.hpp>
 
 namespace act
 {
