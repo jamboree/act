@@ -9,46 +9,52 @@
 
 #include <act/awaiter.hpp>
 
+namespace act { namespace detail
+{
+    template<class Acceptor>
+    struct accept_awaiter
+    {
+        using socket = typename Acceptor::protocol_type::socket;
+
+        Acceptor& _acceptor;
+        socket _sock;
+        boost::system::error_code _ec;
+
+        accept_awaiter(Acceptor& acceptor)
+          : _acceptor(acceptor)
+          , _sock(_acceptor.get_io_service())
+        {}
+
+        bool await_ready() const
+        {
+            return false;
+        }
+
+        template<class F>
+        void await_suspend(F&& cb)
+        {
+            _acceptor.async_accept(_sock, [&_ec=_ec, cb=std::forward<F>(cb)](boost::system::error_code ec)
+            {
+                _ec = ec;
+                cb();
+            });
+        }
+
+        socket await_resume()
+        {
+            if (_ec)
+                throw boost::system::system_error(_ec);
+            return std::move(_sock);
+        }
+    };
+}}
+
 namespace act
 {
     template<class Acceptor>
-    inline auto accept(Acceptor& acceptor)
+    inline detail::accept_awaiter<Acceptor> accept(Acceptor& acceptor)
     {
-        struct awaiter
-        {
-            using socket = typename Acceptor::protocol_type::socket;
-
-            Acceptor& _acceptor;
-            socket _sock;
-            boost::system::error_code _ec;
-
-            awaiter(Acceptor& acceptor)
-                : _acceptor(acceptor)
-                , _sock(_acceptor.get_io_service())
-            {}
-
-            bool await_ready() const
-            {
-                return false;
-            }
-
-            void await_suspend(stdex::coroutine_handle<> cb)
-            {
-                _acceptor.async_accept(_sock, [&_ec = _ec, cb](boost::system::error_code ec)
-                {
-                    _ec = ec;
-                    cb();
-                });
-            }
-
-            socket await_resume()
-            {
-                if (_ec)
-                    throw boost::system::system_error(_ec);
-                return std::move(_sock);
-            }
-        };
-        return awaiter{ acceptor };
+        return {acceptor};
     }
 
     template<class Acceptor, class Socket>
