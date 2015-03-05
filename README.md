@@ -6,17 +6,17 @@ act
 ## Requirements
 
 - Compiler that implements [N4286](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4286.pdf)
+- Or emulation library like [CO2](https://github.com/jamboree/co2)
 
 ## Dependencies
 
 - [Boost](http://www.boost.org/)
-- [stdex](https://github.com/jamboree/stdex)
 
 ## Example
 
 async echo server
 ```c++
-stdex::task<void> session(asio::ip::tcp::socket&& sock)
+std::task<void> session(asio::ip::tcp::socket&& sock)
 {
     try
     {
@@ -31,7 +31,7 @@ stdex::task<void> session(asio::ip::tcp::socket&& sock)
     }
 }
 
-stdex::task<void> server(asio::io_service& io)
+std::task<void> server(asio::io_service& io)
 {
     asio::ip::tcp::endpoint endpoint(asio::ip::tcp::v4(), 8823);
     asio::ip::tcp::acceptor acceptor(io, endpoint);
