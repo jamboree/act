@@ -16,14 +16,17 @@ act
 
 async echo server
 ```c++
-std::task<void> session(asio::ip::tcp::socket&& sock)
+std::task<void> session(asio::ip::tcp::socket sock)
 {
     try
     {
-        char rbuf[1024];
+        char buf[1024];
         std::cout << "connected: " << sock.remote_endpoint() << std::endl;
-        auto len = await act::read_some(sock, asio::buffer(rbuf));
-        await act::write(sock, asio::buffer(rbuf, len));
+        for ( ; ; )
+        {
+            auto len = await act::read_some(sock, asio::buffer(buf));
+            await act::write(sock, asio::buffer(buf, len));
+        }
     }
     catch (std::exception& e)
     {
@@ -45,7 +48,7 @@ std::task<void> server(asio::io_service& io)
 int main(int argc, char *argv[])
 {
     asio::io_service io;
-	server(io);
+    server(io);
     io.run();
 
     return EXIT_SUCCESS;
