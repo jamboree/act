@@ -24,7 +24,10 @@ std::task<void> session(asio::ip::tcp::socket sock)
         std::cout << "connected: " << sock.remote_endpoint() << std::endl;
         for ( ; ; )
         {
-            auto len = await act::read_some(sock, asio::buffer(buf));
+            act::error_code ec;
+            auto len = await act::read_some(sock, asio::buffer(buf), ec);
+            if (ec == asio::error::eof)
+                return;
             await act::write(sock, asio::buffer(buf, len));
         }
     }

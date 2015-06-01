@@ -18,7 +18,7 @@ namespace act { namespace detail
 
         Acceptor& _acceptor;
         socket _sock;
-        boost::system::error_code _ec;
+        error_code _ec;
 
         accept_awaiter(Acceptor& acceptor)
           : _acceptor(acceptor)
@@ -33,7 +33,7 @@ namespace act { namespace detail
         template<class F>
         void await_suspend(F&& cb)
         {
-            _acceptor.async_accept(_sock, [&_ec=_ec, cb=std::forward<F>(cb)](boost::system::error_code ec)
+            _acceptor.async_accept(_sock, [&_ec=_ec, cb=std::forward<F>(cb)](error_code ec)
             {
                 _ec = ec;
                 cb();
@@ -42,8 +42,7 @@ namespace act { namespace detail
 
         socket await_resume()
         {
-            if (_ec)
-                throw boost::system::system_error(_ec);
+            error_handler<true>::report(_ec);
             return std::move(_sock);
         }
     };
@@ -67,12 +66,30 @@ namespace act
     }
 
     template<class Acceptor, class Socket>
+    inline auto accept(Acceptor& acceptor, Socket& socket, error_code& ec)
+    {
+        return make_awaiter<void>([&](auto&& cb)
+        {
+            acceptor.async_accept(socket, cb);
+        }, ec);
+    }
+
+    template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, typename Acceptor::endpoint_type& endpoint)
     {
         return make_awaiter<void>([&](auto&& cb)
         {
             acceptor.async_accept(socket, endpoint, cb);
         });
+    }
+
+    template<class Acceptor, class Socket>
+    inline auto accept(Acceptor& acceptor, Socket& socket, typename Acceptor::endpoint_type& endpoint, error_code& ec)
+    {
+        return make_awaiter<void>([&](auto&& cb)
+        {
+            acceptor.async_accept(socket, endpoint, cb);
+        }, ec);
     }
 }
 

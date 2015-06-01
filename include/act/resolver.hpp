@@ -18,9 +18,21 @@ namespace act
     }
 
     template<class Resolver>
+    inline auto resolve(Resolver& resolver, typename Resolver::query const& query, error_code& ec)
+    {
+        ACT_RETURN_FREE_AWAITER_EC(typename Resolver::iterator, resolver, resolve, query);
+    }
+
+    template<class Resolver>
     inline auto resolve(Resolver& resolver, typename Resolver::endpoint_type const& endpoint)
     {
         ACT_RETURN_FREE_AWAITER(typename Resolver::iterator, resolver, resolve, endpoint);
+    }
+
+    template<class Resolver>
+    inline auto resolve(Resolver& resolver, typename Resolver::endpoint_type const& endpoint, error_code& ec)
+    {
+        ACT_RETURN_FREE_AWAITER_EC(typename Resolver::iterator, resolver, resolve, endpoint);
     }
 }
 
