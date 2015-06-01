@@ -9,7 +9,7 @@
 
 #include <functional>
 #include <type_traits>
-#include <act/expected.hpp>
+#include <boost/system/system_error.hpp>
 
 namespace act { namespace detail
 {
@@ -32,7 +32,8 @@ namespace act
     struct awaiter
     {
         F _f;
-        expected<T> _ret;
+        boost::system::error_code _ec;
+        T _val;
 
         bool await_ready() const
         {
@@ -44,17 +45,17 @@ namespace act
         {
             _f([this, cb=std::forward<F>(cb)](boost::system::error_code ec, T val)
             {
-                if (ec)
-                    _ret.set_error(ec);
-                else
-                    _ret.set_value(val);
+                _ec = ec;
+                _val = val;
                 cb();
             });
         }
 
-        expected<T>&& await_resume()
+        T await_resume()
         {
-            return std::move(_ret);
+            if (_ec)
+                throw boost::system::system_error(_ec);
+            return _val;
         }
     };
 
@@ -79,9 +80,10 @@ namespace act
             });
         }
 
-        boost::system::error_code await_resume()
+        void await_resume()
         {
-            return _ec;
+            if (_ec)
+                throw boost::system::system_error(_ec);
         }
     };
 
