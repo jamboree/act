@@ -67,10 +67,10 @@ namespace act
             return false;
         }
 
-        template<class F>
-        void await_suspend(F&& cb)
+        template<class Cb>
+        void await_suspend(Cb&& cb)
         {
-            _f([this, cb=std::forward<F>(cb)](error_code ec, T val)
+            _f([this, cb=std::forward<Cb>(cb)](error_code ec, T val)
             {
                 _ec = ec;
                 _val = val;
@@ -98,10 +98,10 @@ namespace act
             return false;
         }
 
-        template<class F>
-        void await_suspend(F&& cb)
+        template<class Cb>
+        void await_suspend(Cb&& cb)
         {
-            _f([&_ec=_ec, cb=std::forward<F>(cb)](error_code ec)
+            _f([&_ec=_ec, cb=std::forward<Cb>(cb)](error_code ec)
             {
                 _ec = ec;
                 cb();
