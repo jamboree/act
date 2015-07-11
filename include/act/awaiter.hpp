@@ -123,8 +123,9 @@ namespace act
     template<class T, class F>
     inline awaiter<T, std::remove_reference_t<F>, false> make_awaiter(F&& f, error_code& ec)
     {
-        return{std::forward<F>(f), ec};
+        return {std::forward<F>(f), ec};
     }
+}
 
 #define ACT_RETURN_AWAITER(R, obj, op, ...)                                     \
     return [&obj](auto&&... args)                                               \
@@ -135,6 +136,7 @@ namespace act
         });                                                                     \
     }(__VA_ARGS__)                                                              \
 /***/
+
 #define ACT_RETURN_FREE_AWAITER(R, obj, op, ...)                                \
     return [&obj](auto&&... args)                                               \
     {                                                                           \
@@ -144,6 +146,7 @@ namespace act
         });                                                                     \
     }(__VA_ARGS__)                                                              \
 /***/
+
 #define ACT_RETURN_AWAITER_EC(R, obj, op, ...)                                  \
     return [&obj, &ec](auto&&... args)                                          \
     {                                                                           \
@@ -153,6 +156,7 @@ namespace act
         }, ec);                                                                 \
     }(__VA_ARGS__)                                                              \
 /***/
+
 #define ACT_RETURN_FREE_AWAITER_EC(R, obj, op, ...)                             \
     return [&obj, &ec](auto&&... args)                                          \
     {                                                                           \
@@ -162,6 +166,5 @@ namespace act
         }, ec);                                                                 \
     }(__VA_ARGS__)                                                              \
 /***/
-}
 
 #endif
