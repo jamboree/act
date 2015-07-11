@@ -54,19 +54,13 @@ namespace act
     template<class Timer>
     inline auto expire(Timer& timer)
     {
-        return make_awaiter<void>([&timer](auto&& cb)
-        {
-            timer.async_wait(cb);
-        });
+        ACT_RETURN_AWAITER(void, timer, wait);
     }
 
     template<class Timer>
     inline auto expire(Timer& timer, error_code& ec)
     {
-        return make_awaiter<void>([&timer](auto&& cb)
-        {
-            timer.async_wait(cb);
-        }, ec);
+        ACT_RETURN_AWAITER_EC(void, timer, wait);
     }
 }
 

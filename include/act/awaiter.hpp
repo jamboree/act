@@ -127,34 +127,41 @@ namespace act
     }
 
 #define ACT_RETURN_AWAITER(R, obj, op, ...)                                     \
-    return make_awaiter<R>([=, &obj](auto&& cb)                                 \
+    return [&obj](auto&&... args)                                               \
     {                                                                           \
-        obj.async_##op(__VA_ARGS__, cb);                                        \
-    })
-
+        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
+        {                                                                       \
+            obj.async_##op(::act::detail::unwrap(args)..., cb);                 \
+        });                                                                     \
+    }(__VA_ARGS__)                                                              \
+/***/
 #define ACT_RETURN_FREE_AWAITER(R, obj, op, ...)                                \
     return [&obj](auto&&... args)                                               \
     {                                                                           \
-        return act::make_awaiter<R>([=, &obj](auto&& cb)                        \
+        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
         {                                                                       \
-            ::boost::asio::async_##op(obj, act::detail::unwrap(args)..., cb);   \
+            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., cb); \
         });                                                                     \
-    }(__VA_ARGS__)
-
+    }(__VA_ARGS__)                                                              \
+/***/
 #define ACT_RETURN_AWAITER_EC(R, obj, op, ...)                                  \
-    return make_awaiter<R>([=, &obj](auto&& cb)                                 \
+    return [&obj, &ec](auto&&... args)                                          \
     {                                                                           \
-        obj.async_##op(__VA_ARGS__, cb);                                        \
-    }, ec)
-
+        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
+        {                                                                       \
+            obj.async_##op(::act::detail::unwrap(args)..., cb);                 \
+        }, ec);                                                                 \
+    }(__VA_ARGS__)                                                              \
+/***/
 #define ACT_RETURN_FREE_AWAITER_EC(R, obj, op, ...)                             \
     return [&obj, &ec](auto&&... args)                                          \
     {                                                                           \
-        return act::make_awaiter<R>([=, &obj](auto&& cb)                        \
+        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
         {                                                                       \
-            ::boost::asio::async_##op(obj, act::detail::unwrap(args)..., cb);   \
+            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., cb); \
         }, ec);                                                                 \
-    }(__VA_ARGS__)
+    }(__VA_ARGS__)                                                              \
+/***/
 }
 
 #endif
