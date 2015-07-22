@@ -49,6 +49,27 @@ namespace act { namespace detail
 
         static void report(error_code const&) {}
     };
+
+    // ASIO somewhat requires handlers to be CopyConstructible, this wrapper
+    // just trick the checking mechanism by declaring the copy ops.
+    template<class F>
+    struct move_wrapper : F
+    {
+        move_wrapper(F&& f) : F(std::move(f)) {}
+
+        move_wrapper(move_wrapper&&) = default;
+        move_wrapper& operator=(move_wrapper&&) = default;
+
+        // never defined
+        move_wrapper(const move_wrapper&);
+        move_wrapper& operator=(const move_wrapper&);
+    };
+
+    template <typename F>
+    inline move_wrapper<F> mv(F& f)
+    {
+        return std::move(f);
+    }
 }}
 
 namespace act
@@ -70,7 +91,7 @@ namespace act
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f([this, cb=std::forward<Cb>(cb)](error_code ec, T val)
+            _f([this, cb=detail::mv(cb)](error_code ec, T val) mutable
             {
                 _ec = ec;
                 _val = val;
@@ -101,7 +122,7 @@ namespace act
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f([&_ec=_ec, cb=std::forward<Cb>(cb)](error_code ec)
+            _f([&_ec=_ec, cb=detail::mv(cb)](error_code ec) mutable
             {
                 _ec = ec;
                 cb();
@@ -132,7 +153,7 @@ namespace act
     {                                                                           \
         return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
         {                                                                       \
-            obj.async_##op(::act::detail::unwrap(args)..., cb);                 \
+            obj.async_##op(::act::detail::unwrap(args)..., std::move(cb));      \
         });                                                                     \
     }(__VA_ARGS__)                                                              \
 /***/
@@ -142,7 +163,7 @@ namespace act
     {                                                                           \
         return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
         {                                                                       \
-            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., cb); \
+            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., std::move(cb));\
         });                                                                     \
     }(__VA_ARGS__)                                                              \
 /***/
@@ -152,7 +173,7 @@ namespace act
     {                                                                           \
         return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
         {                                                                       \
-            obj.async_##op(::act::detail::unwrap(args)..., cb);                 \
+            obj.async_##op(::act::detail::unwrap(args)..., std::move(cb));      \
         }, ec);                                                                 \
     }(__VA_ARGS__)                                                              \
 /***/
@@ -162,7 +183,7 @@ namespace act
     {                                                                           \
         return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
         {                                                                       \
-            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., cb); \
+            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., std::move(cb));\
         }, ec);                                                                 \
     }(__VA_ARGS__)                                                              \
 /***/

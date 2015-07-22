@@ -33,7 +33,7 @@ namespace act { namespace detail
         template<class F>
         void await_suspend(F&& cb)
         {
-            _acceptor.async_accept(_sock, [&_ec=_ec, cb=std::forward<F>(cb)](error_code ec)
+            _acceptor.async_accept(_sock, [&_ec=_ec, cb=mv(cb)](error_code ec) mutable
             {
                 _ec = ec;
                 cb();
@@ -61,7 +61,7 @@ namespace act
     {
         return make_awaiter<void>([&](auto&& cb)
         {
-            acceptor.async_accept(socket, cb);
+            acceptor.async_accept(socket, std::move(cb));
         });
     }
 
@@ -70,7 +70,7 @@ namespace act
     {
         return make_awaiter<void>([&](auto&& cb)
         {
-            acceptor.async_accept(socket, cb);
+            acceptor.async_accept(socket, std::move(cb));
         }, ec);
     }
 
@@ -79,7 +79,7 @@ namespace act
     {
         return make_awaiter<void>([&](auto&& cb)
         {
-            acceptor.async_accept(socket, endpoint, cb);
+            acceptor.async_accept(socket, endpoint, std::move(cb));
         });
     }
 
@@ -88,7 +88,7 @@ namespace act
     {
         return make_awaiter<void>([&](auto&& cb)
         {
-            acceptor.async_accept(socket, endpoint, cb);
+            acceptor.async_accept(socket, endpoint, std::move(cb));
         }, ec);
     }
 }
