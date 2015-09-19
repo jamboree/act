@@ -14,6 +14,7 @@
 namespace act
 {
     using error_code = boost::system::error_code;
+    using system_error = boost::system::system_error;
 }
 
 namespace act { namespace detail
@@ -30,20 +31,18 @@ namespace act { namespace detail
         return val;
     }
 
-    template<bool Throw>
-    struct error_handler
+    struct throw_error
     {
         using error_storage = error_code;
 
         static void report(error_code const& ec)
         {
             if (ec)
-                throw boost::system::system_error(ec);
+                throw system_error(ec);
         }
     };
 
-    template<>
-    struct error_handler<false>
+    struct pass_error
     {
         using error_storage = error_code&;
 
@@ -70,17 +69,12 @@ namespace act { namespace detail
     {
         return std::move(f);
     }
-}}
 
-namespace act
-{
-    template<class T, class F, bool Throw>
+    template<class T, class F, class Eh>
     struct awaiter
     {
-        using error_handler = detail::error_handler<Throw>;
-
         F _f;
-        typename error_handler::error_storage _ec;
+        typename Eh::error_storage _ec;
         T _val;
 
         bool await_ready() const
@@ -91,7 +85,7 @@ namespace act
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f([this, cb=detail::mv(cb)](error_code ec, T val) mutable
+            _f([this, cb = mv(cb)](error_code ec, T val) mutable
             {
                 _ec = ec;
                 _val = val;
@@ -101,18 +95,16 @@ namespace act
 
         T await_resume()
         {
-            error_handler::report(_ec);
+            Eh::report(_ec);
             return _val;
         }
     };
 
-    template<class F, bool Throw>
-    struct awaiter<void, F, Throw>
+    template<class F, class Eh>
+    struct awaiter<void, F, Eh>
     {
-        using error_handler = detail::error_handler<Throw>;
-
         F _f;
-        typename error_handler::error_storage _ec;
+        typename Eh::error_storage _ec;
 
         bool await_ready() const
         {
@@ -122,7 +114,7 @@ namespace act
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f([&_ec=_ec, cb=detail::mv(cb)](error_code ec) mutable
+            _f([&_ec = _ec, cb = mv(cb)](error_code ec) mutable
             {
                 _ec = ec;
                 cb();
@@ -131,18 +123,23 @@ namespace act
 
         void await_resume()
         {
-            error_handler::report(_ec);
+            Eh::report(_ec);
         }
     };
+}}
 
+namespace act
+{
     template<class T, class F>
-    inline awaiter<T, std::remove_reference_t<F>, true> make_awaiter(F&& f)
+    inline detail::awaiter<T, std::remove_reference_t<F>, detail::throw_error>
+    make_awaiter(F&& f)
     {
         return {std::forward<F>(f)};
     }
 
     template<class T, class F>
-    inline awaiter<T, std::remove_reference_t<F>, false> make_awaiter(F&& f, error_code& ec)
+    inline detail::awaiter<T, std::remove_reference_t<F>, detail::pass_error>
+    make_awaiter(F&& f, error_code& ec)
     {
         return {std::forward<F>(f), ec};
     }

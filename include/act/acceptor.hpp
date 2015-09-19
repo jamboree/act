@@ -11,18 +11,24 @@
 
 namespace act { namespace detail
 {
-    template<class Acceptor>
+    template<class Acceptor, class Eh>
     struct accept_awaiter
     {
         using socket = typename Acceptor::protocol_type::socket;
 
         Acceptor& _acceptor;
         socket _sock;
-        error_code _ec;
+        typename Eh::error_storage _ec;
 
         accept_awaiter(Acceptor& acceptor)
           : _acceptor(acceptor)
           , _sock(_acceptor.get_io_service())
+        {}
+        
+        accept_awaiter(Acceptor& acceptor, typename Eh::error_storage ec)
+          : _acceptor(acceptor)
+          , _sock(_acceptor.get_io_service())
+          , _ec(ec)
         {}
 
         bool await_ready() const
@@ -31,18 +37,18 @@ namespace act { namespace detail
         }
 
         template<class F>
-        void await_suspend(F&& cb)
+        void await_suspend(F&& f)
         {
-            _acceptor.async_accept(_sock, [&_ec=_ec, cb=mv(cb)](error_code ec) mutable
+            _acceptor.async_accept(_sock, [&_ec = _ec, f = mv(f)](error_code ec) mutable
             {
                 _ec = ec;
-                cb();
+                f();
             });
         }
 
         socket await_resume()
         {
-            error_handler<true>::report(_ec);
+            Eh::report(_ec);
             return std::move(_sock);
         }
     };
@@ -51,9 +57,15 @@ namespace act { namespace detail
 namespace act
 {
     template<class Acceptor>
-    inline detail::accept_awaiter<Acceptor> accept(Acceptor& acceptor)
+    inline detail::accept_awaiter<Acceptor, detail::throw_error> accept(Acceptor& acceptor)
     {
         return {acceptor};
+    }
+
+    template<class Acceptor>
+    inline detail::accept_awaiter<Acceptor, detail::pass_error> accept(Acceptor& acceptor, error_code& ec)
+    {
+        return {acceptor, ec};
     }
 
     template<class Acceptor, class Socket>
