@@ -10,6 +10,7 @@
 #include <functional>
 #include <type_traits>
 #include <boost/system/system_error.hpp>
+#include <act/detail/mv.hpp>
 
 namespace act
 {
@@ -48,27 +49,6 @@ namespace act { namespace detail
 
         static void report(error_code const&) {}
     };
-
-    // ASIO somewhat requires handlers to be CopyConstructible, this wrapper
-    // just trick the checking mechanism by declaring the copy ops.
-    template<class F>
-    struct move_wrapper : F
-    {
-        move_wrapper(F&& f) : F(std::move(f)) {}
-
-        move_wrapper(move_wrapper&&) = default;
-        move_wrapper& operator=(move_wrapper&&) = default;
-
-        // never defined
-        move_wrapper(const move_wrapper&);
-        move_wrapper& operator=(const move_wrapper&);
-    };
-
-    template <typename F>
-    inline move_wrapper<F> mv(F& f)
-    {
-        return std::move(f);
-    }
 
     template<class T, class F, class Eh>
     struct awaiter
