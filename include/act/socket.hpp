@@ -43,12 +43,6 @@ namespace act
     }
 
     template<class Socket, class MutableBufferSequence>
-    inline auto receive(Socket& socket, MutableBufferSequence const& buffers, error_code& ec)
-    {
-        ACT_RETURN_AWAITER_EC(std::size_t, socket, receive, buffers);
-    }
-
-    template<class Socket, class MutableBufferSequence>
     inline auto receive(Socket& socket, MutableBufferSequence const& buffers, typename Socket::message_flags flags)
     {
         ACT_RETURN_AWAITER(std::size_t, socket, receive, buffers, flags);
@@ -60,16 +54,28 @@ namespace act
         ACT_RETURN_AWAITER_EC(std::size_t, socket, receive, buffers, flags);
     }
 
+    template<class Socket, class MutableBufferSequence>
+    inline auto receive_from(Socket& socket, MutableBufferSequence const& buffers, typename Socket::endpoint_type& endpoint)
+    {
+        ACT_RETURN_AWAITER(std::size_t, socket, receive_from, buffers, std::ref(endpoint));
+    }
+
+    template<class Socket, class MutableBufferSequence>
+    inline auto receive_from(Socket& socket, MutableBufferSequence const& buffers, typename Socket::endpoint_type& endpoint, typename Socket::message_flags flags)
+    {
+        ACT_RETURN_AWAITER(std::size_t, socket, receive_from, buffers, std::ref(endpoint), flags);
+    }
+
+    template<class Socket, class MutableBufferSequence>
+    inline auto receive_from(Socket& socket, MutableBufferSequence const& buffers, typename Socket::endpoint_type& endpoint, typename Socket::message_flags flags, error_code& ec)
+    {
+        ACT_RETURN_AWAITER_EC(std::size_t, socket, receive_from, buffers, std::ref(endpoint), flags);
+    }
+
     template<class Socket, class ConstBufferSequence>
     inline auto send(Socket& socket, ConstBufferSequence const& buffers)
     {
         ACT_RETURN_AWAITER(std::size_t, socket, send, buffers);
-    }
-
-    template<class Socket, class ConstBufferSequence>
-    inline auto send(Socket& socket, ConstBufferSequence const& buffers, error_code& ec)
-    {
-        ACT_RETURN_AWAITER_EC(std::size_t, socket, send, buffers);
     }
 
     template<class Socket, class ConstBufferSequence>
@@ -82,6 +88,24 @@ namespace act
     inline auto send(Socket& socket, ConstBufferSequence const& buffers, typename Socket::message_flags flags, error_code& ec)
     {
         ACT_RETURN_AWAITER_EC(std::size_t, socket, send, buffers, flags);
+    }
+
+    template<class Socket, class ConstBufferSequence>
+    inline auto send_to(Socket& socket, ConstBufferSequence const& buffers, typename Socket::endpoint_type const& endpoint)
+    {
+        ACT_RETURN_AWAITER(std::size_t, socket, send_to, buffers, endpoint);
+    }
+
+    template<class Socket, class ConstBufferSequence>
+    inline auto send_to(Socket& socket, ConstBufferSequence const& buffers, typename Socket::endpoint_type const& endpoint, typename Socket::message_flags flags)
+    {
+        ACT_RETURN_AWAITER(std::size_t, socket, send_to, buffers, endpoint, flags);
+    }
+
+    template<class Socket, class ConstBufferSequence>
+    inline auto send_to(Socket& socket, ConstBufferSequence const& buffers, typename Socket::endpoint_type const& endpoint, typename Socket::message_flags flags, error_code& ec)
+    {
+        ACT_RETURN_AWAITER_EC(std::size_t, socket, send_to, buffers, endpoint, flags);
     }
 
     template<class Socket, class ConstBufferSequence>
