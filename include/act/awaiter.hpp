@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -50,9 +50,10 @@ namespace act { namespace detail
         static void report(error_code const&) {}
     };
 
-    template<class T, class F, class Eh>
+    template<class T, class Obj, class F, class Eh>
     struct awaiter
     {
+        Obj& obj;
         F _f;
         typename Eh::error_storage _ec;
         T _val;
@@ -65,7 +66,7 @@ namespace act { namespace detail
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f([this, cb = mv(cb)](error_code ec, T val) mutable
+            _f(obj, [this, cb = mv(cb)](error_code const& ec, T val) mutable
             {
                 _ec = ec;
                 _val = val;
@@ -80,9 +81,10 @@ namespace act { namespace detail
         }
     };
 
-    template<class F, class Eh>
-    struct awaiter<void, F, Eh>
+    template<class Obj, class F, class Eh>
+    struct awaiter<void, Obj, F, Eh>
     {
+        Obj& obj;
         F _f;
         typename Eh::error_storage _ec;
 
@@ -94,7 +96,7 @@ namespace act { namespace detail
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f([&_ec = _ec, cb = mv(cb)](error_code ec) mutable
+            _f(obj, [&_ec = _ec, cb = mv(cb)](error_code const& ec) mutable
             {
                 _ec = ec;
                 cb();
@@ -110,25 +112,25 @@ namespace act { namespace detail
 
 namespace act
 {
-    template<class T, class F>
-    inline detail::awaiter<T, std::remove_reference_t<F>, detail::throw_error>
-    make_awaiter(F&& f)
+    template<class T, class Obj, class F>
+    inline detail::awaiter<T, Obj, std::remove_reference_t<F>, detail::throw_error>
+    make_awaiter(Obj& obj, F&& f)
     {
-        return {std::forward<F>(f)};
+        return {obj, std::forward<F>(f)};
     }
 
-    template<class T, class F>
-    inline detail::awaiter<T, std::remove_reference_t<F>, detail::pass_error>
-    make_awaiter(F&& f, error_code& ec)
+    template<class T, class Obj, class F>
+    inline detail::awaiter<T, Obj, std::remove_reference_t<F>, detail::pass_error>
+    make_awaiter(Obj& obj, F&& f, error_code& ec)
     {
-        return {std::forward<F>(f), ec};
+        return {obj, std::forward<F>(f), ec};
     }
 }
 
 #define ACT_RETURN_AWAITER(R, obj, op, ...)                                     \
     return [&obj](auto&&... args)                                               \
     {                                                                           \
-        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
+        return ::act::make_awaiter<R>(obj, [=](auto& obj, auto&& cb)            \
         {                                                                       \
             obj.async_##op(::act::detail::unwrap(args)..., std::move(cb));      \
         });                                                                     \
@@ -138,9 +140,9 @@ namespace act
 #define ACT_RETURN_FREE_AWAITER(R, obj, op, ...)                                \
     return [&obj](auto&&... args)                                               \
     {                                                                           \
-        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
+        return ::act::make_awaiter<R>(obj, [=](auto& obj, auto&& cb)            \
         {                                                                       \
-            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., std::move(cb));\
+            async_##op(obj, ::act::detail::unwrap(args)..., std::move(cb));     \
         });                                                                     \
     }(__VA_ARGS__)                                                              \
 /***/
@@ -148,7 +150,7 @@ namespace act
 #define ACT_RETURN_AWAITER_EC(R, obj, op, ...)                                  \
     return [&obj, &ec](auto&&... args)                                          \
     {                                                                           \
-        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
+        return ::act::make_awaiter<R>(obj, [=](auto& obj, auto&& cb)            \
         {                                                                       \
             obj.async_##op(::act::detail::unwrap(args)..., std::move(cb));      \
         }, ec);                                                                 \
@@ -158,9 +160,9 @@ namespace act
 #define ACT_RETURN_FREE_AWAITER_EC(R, obj, op, ...)                             \
     return [&obj, &ec](auto&&... args)                                          \
     {                                                                           \
-        return ::act::make_awaiter<R>([=, &obj](auto&& cb)                      \
+        return ::act::make_awaiter<R>(obj, [=](auto& obj, auto&& cb)            \
         {                                                                       \
-            ::boost::asio::async_##op(obj, ::act::detail::unwrap(args)..., std::move(cb));\
+            async_##op(obj, ::act::detail::unwrap(args)..., std::move(cb));     \
         }, ec);                                                                 \
     }(__VA_ARGS__)                                                              \
 /***/

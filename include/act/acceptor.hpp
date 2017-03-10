@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,18 +16,18 @@ namespace act { namespace detail
     {
         using socket = typename Acceptor::protocol_type::socket;
 
-        Acceptor& _acceptor;
+        Acceptor& obj;
         socket _sock;
         typename Eh::error_storage _ec;
 
         accept_awaiter(Acceptor& acceptor)
-          : _acceptor(acceptor)
-          , _sock(_acceptor.get_io_service())
+          : obj(acceptor)
+          , _sock(obj.get_io_service())
         {}
         
         accept_awaiter(Acceptor& acceptor, typename Eh::error_storage ec)
-          : _acceptor(acceptor)
-          , _sock(_acceptor.get_io_service())
+          : obj(acceptor)
+          , _sock(obj.get_io_service())
           , _ec(ec)
         {}
 
@@ -39,7 +39,7 @@ namespace act { namespace detail
         template<class F>
         void await_suspend(F&& f)
         {
-            _acceptor.async_accept(_sock, [&_ec = _ec, f = mv(f)](error_code ec) mutable
+            obj.async_accept(_sock, [&_ec = _ec, f = mv(f)](error_code ec) mutable
             {
                 _ec = ec;
                 f();
