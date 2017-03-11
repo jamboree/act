@@ -8,59 +8,36 @@
 #define ACT_TIMER_HPP_INCLUDED
 
 #include <act/awaiter.hpp>
+#include <act/wait.hpp>
 
 namespace act
 {
     template<class Timer>
-    inline auto wait_for(Timer& timer, typename Timer::duration const& duration)
+    inline auto sleep_for(Timer& timer, typename Timer::duration const& duration)
     {
-        return make_awaiter<void>([&timer, duration](auto&& cb)
-        {
-            timer.expires_from_now(duration);
-            timer.async_wait(std::move(cb));
-        });
+        timer.expires_from_now(duration);
+        return wait(timer);
     }
 
     template<class Timer>
-    inline auto wait_for(Timer& timer, typename Timer::duration const& duration, error_code& ec)
+    inline auto sleep_for(Timer& timer, typename Timer::duration const& duration, error_code& ec)
     {
-        return make_awaiter<void>([&timer, duration](auto&& cb)
-        {
-            timer.expires_from_now(duration);
-            timer.async_wait(std::move(cb));
-        }, ec);
+        timer.expires_from_now(duration);
+        return wait(timer, ec);
     }
 
     template<class Timer>
-    inline auto wait_until(Timer& timer, typename Timer::time_point const& time_point)
+    inline auto sleep_until(Timer& timer, typename Timer::time_point const& time_point)
     {
-        return make_awaiter<void>([&timer, time_point](auto&& cb)
-        {
-            timer.expires_at(time_point);
-            timer.async_wait(std::move(cb));
-        });
+        timer.expires_at(time_point);
+        return wait(timer);
     }
 
     template<class Timer>
-    inline auto wait_until(Timer& timer, typename Timer::time_point const& time_point, error_code& ec)
+    inline auto sleep_until(Timer& timer, typename Timer::time_point const& time_point, error_code& ec)
     {
-        return make_awaiter<void>([&timer, time_point](auto&& cb)
-        {
-            timer.expires_at(time_point);
-            timer.async_wait(std::move(cb));
-        }, ec);
-    }
-
-    template<class Timer>
-    inline auto expire(Timer& timer)
-    {
-        ACT_RETURN_AWAITER(void, timer, wait);
-    }
-
-    template<class Timer>
-    inline auto expire(Timer& timer, error_code& ec)
-    {
-        ACT_RETURN_AWAITER_EC(void, timer, wait);
+        timer.expires_at(time_point);
+        return wait(timer, ec);
     }
 
     namespace detail
@@ -78,6 +55,11 @@ namespace act
 
             auto await_suspend(co2::coroutine<>& coro)
             {
+                timer.async_wait([this](act::error_code const& ec)
+                {
+                    if (!ec)
+                        cancel(task);
+                });
                 return task.await_suspend(coro);
             }
 
@@ -93,23 +75,6 @@ namespace act
     inline detail::timeout_awaiter<Task, Timer> timeout(Task&& task, Timer& timer, typename Timer::duration const& duration)
     {
         timer.expires_from_now(duration);
-        timer.async_wait([&obj = task.obj](act::error_code const& ec)
-        {
-            if (ec != boost::asio::error::operation_aborted)
-                obj.cancel();
-        });
-        return {std::forward<Task>(task), timer};
-    }
-
-    template<class Task, class Timer, class OnTimeout>
-    inline detail::timeout_awaiter<Task, Timer> timeout(Task&& task, Timer& timer, typename Timer::duration const& duration, OnTimeout&& f)
-    {
-        timer.expires_from_now(duration);
-        timer.async_wait([f = std::forward<OnTimeout>(f)](act::error_code const& ec)
-        {
-            if (ec != boost::asio::error::operation_aborted)
-                f();
-        });
         return {std::forward<Task>(task), timer};
     }
 }

@@ -71,37 +71,25 @@ namespace act
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, std::move(cb));
-        });
+        ACT_RETURN_AWAITER(void, acceptor, accept, std::ref(socket));
     }
 
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, error_code& ec)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, std::move(cb));
-        }, ec);
+        ACT_RETURN_AWAITER_EC(void, acceptor, accept, std::ref(socket));
     }
 
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, typename Acceptor::endpoint_type& endpoint)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, endpoint, std::move(cb));
-        });
+        ACT_RETURN_AWAITER(void, acceptor, accept, std::ref(socket), std::ref(endpoint));
     }
 
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, typename Acceptor::endpoint_type& endpoint, error_code& ec)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, endpoint, std::move(cb));
-        }, ec);
+        ACT_RETURN_AWAITER_EC(void, acceptor, accept, std::ref(socket), std::ref(endpoint));
     }
 }
 

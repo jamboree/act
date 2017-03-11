@@ -108,6 +108,12 @@ namespace act { namespace detail
             Eh::report(_ec);
         }
     };
+
+    template<class Awaiter>
+    inline auto cancel(Awaiter& a) -> decltype(a.obj.cancel())
+    {
+        a.obj.cancel();
+    }
 }}
 
 namespace act
