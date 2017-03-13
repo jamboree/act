@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,18 +16,18 @@ namespace act { namespace detail
     {
         using socket = typename Acceptor::protocol_type::socket;
 
-        Acceptor& _acceptor;
+        Acceptor& obj;
         socket _sock;
         typename Eh::error_storage _ec;
 
         accept_awaiter(Acceptor& acceptor)
-          : _acceptor(acceptor)
-          , _sock(_acceptor.get_io_service())
+          : obj(acceptor)
+          , _sock(obj.get_io_service())
         {}
         
         accept_awaiter(Acceptor& acceptor, typename Eh::error_storage ec)
-          : _acceptor(acceptor)
-          , _sock(_acceptor.get_io_service())
+          : obj(acceptor)
+          , _sock(obj.get_io_service())
           , _ec(ec)
         {}
 
@@ -39,7 +39,7 @@ namespace act { namespace detail
         template<class F>
         void await_suspend(F&& f)
         {
-            _acceptor.async_accept(_sock, [&_ec = _ec, f = mv(f)](error_code ec) mutable
+            obj.async_accept(_sock, [&_ec = _ec, f = mv(f)](error_code ec) mutable
             {
                 _ec = ec;
                 f();
@@ -71,37 +71,25 @@ namespace act
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, std::move(cb));
-        });
+        ACT_RETURN_AWAITER(void, acceptor, accept, std::ref(socket));
     }
 
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, error_code& ec)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, std::move(cb));
-        }, ec);
+        ACT_RETURN_AWAITER_EC(void, acceptor, accept, std::ref(socket));
     }
 
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, typename Acceptor::endpoint_type& endpoint)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, endpoint, std::move(cb));
-        });
+        ACT_RETURN_AWAITER(void, acceptor, accept, std::ref(socket), std::ref(endpoint));
     }
 
     template<class Acceptor, class Socket>
     inline auto accept(Acceptor& acceptor, Socket& socket, typename Acceptor::endpoint_type& endpoint, error_code& ec)
     {
-        return make_awaiter<void>([&](auto&& cb)
-        {
-            acceptor.async_accept(socket, endpoint, std::move(cb));
-        }, ec);
+        ACT_RETURN_AWAITER_EC(void, acceptor, accept, std::ref(socket), std::ref(endpoint));
     }
 }
 
