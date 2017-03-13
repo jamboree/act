@@ -42,6 +42,8 @@ namespace act
 
     namespace detail
     {
+        // Note: if the timer is expired before the task is launched, the task
+        // may not be cancelled.
         template<class Task, class Timer>
         struct timeout_awaiter
         {
@@ -53,17 +55,18 @@ namespace act
                 return task.await_ready();
             }
 
-            auto await_suspend(co2::coroutine<>& coro)
+            template<class Cb>
+            auto await_suspend(Cb&& cb)
             {
-                timer.async_wait([this](act::error_code const& ec)
+                timer.async_wait([this](error_code const& ec)
                 {
                     if (!ec)
                         cancel(task);
                 });
-                return task.await_suspend(coro);
+                return task.await_suspend(std::forward<Cb>(cb));
             }
 
-            co2::await_result_t<Task> await_resume()
+            auto await_resume() -> decltype(task.await_resume())
             {
                 timer.cancel();
                 return task.await_resume();
