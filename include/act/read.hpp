@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,121 +9,68 @@
 
 #include <cstdint>
 #include <act/awaiter.hpp>
-#include <boost/asio/basic_streambuf_fwd.hpp>
-#include <boost/asio/read.hpp>
-#include <boost/asio/read_at.hpp>
-#include <boost/asio/read_until.hpp>
+#include <act/detail/buffer.hpp>
 
 namespace act
 {
-    using ::boost::asio::basic_streambuf;
-    
-    template<class AsyncReadStream, class MutableBufferSequence>
-    inline auto read(AsyncReadStream& stream, MutableBufferSequence const& buffers)
+    template<class AsyncReadStream, class Buffer>
+    inline auto read(AsyncReadStream& stream, Buffer&& buf)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read, buffers);
+        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncReadStream, class MutableBufferSequence>
-    inline auto read(AsyncReadStream& stream, MutableBufferSequence const& buffers, error_code& ec)
+    template<class AsyncReadStream, class Buffer>
+    inline auto read(AsyncReadStream& stream, Buffer&& buf, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read, buffers);
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncReadStream, class MutableBufferSequence, class CompletionCondition>
-    inline auto read(AsyncReadStream& stream, MutableBufferSequence const& buffers, CompletionCondition condition)
+    template<class AsyncReadStream, class Buffer, class CompletionCondition>
+    inline auto read(AsyncReadStream& stream, Buffer&& buf, CompletionCondition condition)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read, buffers, condition);
+        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read, detail::fwd_buf<Buffer>(buf), condition);
     }
 
-    template<class AsyncReadStream, class MutableBufferSequence, class CompletionCondition>
-    inline auto read(AsyncReadStream& stream, MutableBufferSequence const& buffers, CompletionCondition condition, error_code& ec)
+    template<class AsyncReadStream, class Buffer, class CompletionCondition>
+    inline auto read(AsyncReadStream& stream, Buffer&& buf, CompletionCondition condition, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read, buffers, condition);
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read, detail::fwd_buf<Buffer>(buf), condition);
     }
 
-    template<class AsyncReadStream, class Allocator>
-    inline auto read(AsyncReadStream& stream, basic_streambuf<Allocator>& buf)
+    template<class AsyncRandomAccessReadDevice, class Buffer>
+    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, Buffer&& buf)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read, std::ref(buf));
+        ACT_RETURN_FREE_AWAITER(std::size_t, device, read_at, offset, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncReadStream, class Allocator>
-    inline auto read(AsyncReadStream& stream, basic_streambuf<Allocator>& buf, error_code& ec)
+    template<class AsyncRandomAccessReadDevice, class Buffer>
+    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, Buffer&& buf, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read, std::ref(buf));
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, read_at, offset, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncReadStream, class Allocator, class CompletionCondition>
-    inline auto read(AsyncReadStream& stream, basic_streambuf<Allocator>& buf, CompletionCondition condition)
+    template<class AsyncRandomAccessReadDevice, class Buffer, class CompletionCondition>
+    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, Buffer&& buf, CompletionCondition condition)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read, std::ref(buf), condition);
+        ACT_RETURN_FREE_AWAITER(std::size_t, device, read_at, offset, detail::fwd_buf<Buffer>(buf), condition);
     }
 
-    template<class AsyncReadStream, class Allocator, class CompletionCondition>
-    inline auto read(AsyncReadStream& stream, basic_streambuf<Allocator>& buf, CompletionCondition condition, error_code& ec)
+    template<class AsyncRandomAccessReadDevice, class Buffer, class CompletionCondition>
+    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, Buffer&& buf, CompletionCondition condition, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read, std::ref(buf), condition);
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, read_at, offset, detail::fwd_buf<Buffer>(buf), condition);
     }
 
-    template<class AsyncRandomAccessReadDevice, class MutableBufferSequence>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, MutableBufferSequence const& buffers)
+    template<class AsyncReadStream, class Buffer, class Delim>
+    inline auto read_until(AsyncReadStream& stream, Buffer&& buf, Delim&& delim)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, read_at, offset, buffers);
+        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read_until, detail::fwd_buf<Buffer>(buf), std::forward<Delim>(delim));
     }
 
-    template<class AsyncRandomAccessReadDevice, class MutableBufferSequence>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, MutableBufferSequence const& buffers, error_code& ec)
+    template<class AsyncReadStream, class Buffer, class Delim>
+    inline auto read_until(AsyncReadStream& stream, Buffer&& buf, Delim&& delim, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, read_at, offset, buffers);
-    }
-
-    template<class AsyncRandomAccessReadDevice, class MutableBufferSequence, class CompletionCondition>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, MutableBufferSequence const& buffers, CompletionCondition condition)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, read_at, offset, buffers, condition);
-    }
-
-    template<class AsyncRandomAccessReadDevice, class MutableBufferSequence, class CompletionCondition>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, MutableBufferSequence const& buffers, CompletionCondition condition, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, read_at, offset, buffers, condition);
-    }
-
-    template<class AsyncRandomAccessReadDevice, class Allocator>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, read_at, offset, std::ref(buf));
-    }
-
-    template<class AsyncRandomAccessReadDevice, class Allocator>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, read_at, offset, std::ref(buf));
-    }
-
-    template<class AsyncRandomAccessReadDevice, class Allocator, class CompletionCondition>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf, CompletionCondition condition)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, read_at, offset, std::ref(buf), condition);
-    }
-
-    template<class AsyncRandomAccessReadDevice, class Allocator, class CompletionCondition>
-    inline auto read_at(AsyncRandomAccessReadDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf, CompletionCondition condition, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, read_at, offset, std::ref(buf), condition);
-    }
-
-    template<class AsyncReadStream, class Allocator, class Delim>
-    inline auto read_until(AsyncReadStream& stream, basic_streambuf<Allocator>& buf, Delim&& delim)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, read_until, std::ref(buf), std::forward<Delim>(delim));
-    }
-
-    template<class AsyncReadStream, class Allocator, class Delim>
-    inline auto read_until(AsyncReadStream& stream, basic_streambuf<Allocator>& buf, Delim&& delim, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read_until, std::ref(buf), std::forward<Delim>(delim));
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, read_until, detail::fwd_buf<Buffer>(buf), std::forward<Delim>(delim));
     }
 }
 

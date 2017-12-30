@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -118,6 +118,18 @@ namespace act
     inline auto write_some(Socket& socket, ConstBufferSequence const& buffers, error_code& ec)
     {
         ACT_RETURN_AWAITER_EC(std::size_t, socket, write_some, buffers);
+    }
+
+    template<class Socket>
+    inline auto wait(Socket& socket, typename Socket::wait_type w)
+    {
+        ACT_RETURN_AWAITER(std::size_t, socket, wait, w);
+    }
+
+    template<class Socket>
+    inline auto wait(Socket& socket, typename Socket::wait_type w, error_code& ec)
+    {
+        ACT_RETURN_AWAITER_EC(std::size_t, socket, wait, w);
     }
 }
 

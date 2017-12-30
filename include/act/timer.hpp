@@ -15,14 +15,14 @@ namespace act
     template<class Timer>
     inline auto sleep_for(Timer& timer, typename Timer::duration const& duration)
     {
-        timer.expires_from_now(duration);
+        timer.expires_after(duration);
         return wait(timer);
     }
 
     template<class Timer>
     inline auto sleep_for(Timer& timer, typename Timer::duration const& duration, error_code& ec)
     {
-        timer.expires_from_now(duration);
+        timer.expires_after(duration);
         return wait(timer, ec);
     }
 
@@ -77,7 +77,7 @@ namespace act
     template<class Task, class Timer>
     inline detail::timeout_awaiter<Task, Timer> timeout(Task&& task, Timer& timer, typename Timer::duration const& duration)
     {
-        timer.expires_from_now(duration);
+        timer.expires_after(duration);
         return {std::forward<Task>(task), timer};
     }
 }

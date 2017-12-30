@@ -9,63 +9,18 @@
 
 #include <act/awaiter.hpp>
 
-namespace act { namespace detail
-{
-    template<class Acceptor, class Eh>
-    struct accept_awaiter
-    {
-        using socket = typename Acceptor::protocol_type::socket;
-
-        Acceptor& obj;
-        socket _sock;
-        typename Eh::error_storage _ec;
-
-        accept_awaiter(Acceptor& acceptor)
-          : obj(acceptor)
-          , _sock(obj.get_io_service())
-        {}
-        
-        accept_awaiter(Acceptor& acceptor, typename Eh::error_storage ec)
-          : obj(acceptor)
-          , _sock(obj.get_io_service())
-          , _ec(ec)
-        {}
-
-        bool await_ready() const
-        {
-            return false;
-        }
-
-        template<class F>
-        void await_suspend(F&& f)
-        {
-            obj.async_accept(_sock, [&_ec = _ec, f = mv(f)](error_code ec) mutable
-            {
-                _ec = ec;
-                f();
-            });
-        }
-
-        socket await_resume()
-        {
-            Eh::report(_ec);
-            return std::move(_sock);
-        }
-    };
-}}
-
 namespace act
 {
     template<class Acceptor>
-    inline detail::accept_awaiter<Acceptor, detail::throw_error> accept(Acceptor& acceptor)
+    inline auto accept(Acceptor& acceptor)
     {
-        return {acceptor};
+        ACT_RETURN_AWAITER(void, acceptor, accept);
     }
 
     template<class Acceptor>
-    inline detail::accept_awaiter<Acceptor, detail::pass_error> accept(Acceptor& acceptor, error_code& ec)
+    inline auto accept(Acceptor& acceptor, error_code& ec)
     {
-        return {acceptor, ec};
+        ACT_RETURN_AWAITER_EC(void, acceptor, accept);
     }
 
     template<class Acceptor, class Socket>

@@ -10,7 +10,6 @@
 #include <functional>
 #include <type_traits>
 #include <boost/system/system_error.hpp>
-#include <act/detail/mv.hpp>
 
 namespace act
 {
@@ -66,7 +65,7 @@ namespace act { namespace detail
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f(obj, [this, cb = mv(cb)](error_code const& ec, T val) mutable
+            _f(obj, [this, cb = std::move(cb)](error_code const& ec, T val) mutable
             {
                 _ec = ec;
                 _val = val;
@@ -96,7 +95,7 @@ namespace act { namespace detail
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            _f(obj, [&_ec = _ec, cb = mv(cb)](error_code const& ec) mutable
+            _f(obj, [&_ec = _ec, cb = std::move(cb)](error_code const& ec) mutable
             {
                 _ec = ec;
                 cb();

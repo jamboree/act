@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,14 +7,14 @@
 #ifndef ACT_POST_HPP_INCLUDED
 #define ACT_POST_HPP_INCLUDED
 
-#include <act/detail/mv.hpp>
+#include <utility>
 
 namespace act { namespace detail
 {
-    template<class Scheduler>
+    template<class Executor>
     struct post_awaiter
     {
-        Scheduler& sched;
+        Executor& exe;
 
         bool await_ready() const
         {
@@ -24,7 +24,7 @@ namespace act { namespace detail
         template<class Cb>
         void await_suspend(Cb&& cb)
         {
-            sched.post(detail::mv(cb));
+            post(exe, std::move(cb));
         }
 
         void await_resume() {}
@@ -33,10 +33,10 @@ namespace act { namespace detail
 
 namespace act
 {
-    template<class Scheduler>
-    inline detail::post_awaiter<Scheduler> post(Scheduler& sched)
+    template<class Executor>
+    inline detail::post_awaiter<Executor> post(Executor& exe)
     {
-        return {sched};
+        return {exe};
     }
 }
 

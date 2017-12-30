@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015 Jamboree
+    Copyright (c) 2015-2017 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,108 +9,56 @@
 
 #include <cstdint>
 #include <act/awaiter.hpp>
-#include <boost/asio/basic_streambuf_fwd.hpp>
-#include <boost/asio/write.hpp>
-#include <boost/asio/write_at.hpp>
+#include <act/detail/buffer.hpp>
 
 namespace act
 {
-    using ::boost::asio::basic_streambuf;
-    
-    template<class AsyncWriteStream, class ConstBufferSequence>
-    inline auto write(AsyncWriteStream& stream, ConstBufferSequence const& buffers)
+    template<class AsyncWriteStream, class Buffer>
+    inline auto write(AsyncWriteStream& stream, Buffer&& buf)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, write, buffers);
+        ACT_RETURN_FREE_AWAITER(std::size_t, stream, write, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncWriteStream, class ConstBufferSequence>
-    inline auto write(AsyncWriteStream& stream, ConstBufferSequence const& buffers, error_code& ec)
+    template<class AsyncWriteStream, class Buffer>
+    inline auto write(AsyncWriteStream& stream, Buffer&& buf, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, write, buffers);
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, write, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncWriteStream, class ConstBufferSequence, class CompletionCondition>
-    inline auto write(AsyncWriteStream& stream, ConstBufferSequence const& buffers, CompletionCondition condition)
+    template<class AsyncWriteStream, class Buffer, class CompletionCondition>
+    inline auto write(AsyncWriteStream& stream, Buffer&& buf, CompletionCondition condition)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, write, buffers, condition);
+        ACT_RETURN_FREE_AWAITER(std::size_t, stream, write, detail::fwd_buf<Buffer>(buf), condition);
     }
 
-    template<class AsyncWriteStream, class ConstBufferSequence, class CompletionCondition>
-    inline auto write(AsyncWriteStream& stream, ConstBufferSequence const& buffers, CompletionCondition condition, error_code& ec)
+    template<class AsyncWriteStream, class Buffer, class CompletionCondition>
+    inline auto write(AsyncWriteStream& stream, Buffer&& buf, CompletionCondition condition, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, write, buffers, condition);
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, write, detail::fwd_buf<Buffer>(buf), condition);
     }
 
-    template<class AsyncWriteStream, class Allocator>
-    inline auto write(AsyncWriteStream& stream, basic_streambuf<Allocator>& buf)
+    template<class AsyncRandomAccessWriteDevice, class Buffer>
+    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, Buffer&& buf)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, write, std::ref(buf));
+        ACT_RETURN_FREE_AWAITER(std::size_t, device, write_at, offset, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncWriteStream, class Allocator>
-    inline auto write(AsyncWriteStream& stream, basic_streambuf<Allocator>& buf, error_code& ec)
+    template<class AsyncRandomAccessWriteDevice, class Buffer>
+    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, Buffer&& buf, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, write, std::ref(buf));
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, write_at, offset, detail::fwd_buf<Buffer>(buf));
     }
 
-    template<class AsyncWriteStream, class Allocator, class CompletionCondition>
-    inline auto write(AsyncWriteStream& stream, basic_streambuf<Allocator>& buf, CompletionCondition condition)
+    template<class AsyncRandomAccessWriteDevice, class Buffer, class CompletionCondition>
+    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, Buffer&& buf, CompletionCondition condition)
     {
-        ACT_RETURN_FREE_AWAITER(std::size_t, stream, write, std::ref(buf), condition);
+        ACT_RETURN_FREE_AWAITER(std::size_t, device, write_at, offset, detail::fwd_buf<Buffer>(buf), condition);
     }
 
-    template<class AsyncWriteStream, class Allocator, class CompletionCondition>
-    inline auto write(AsyncWriteStream& stream, basic_streambuf<Allocator>& buf, CompletionCondition condition, error_code& ec)
+    template<class AsyncRandomAccessWriteDevice, class Buffer, class CompletionCondition>
+    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, Buffer&& buf, CompletionCondition condition, error_code& ec)
     {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, stream, write, std::ref(buf), condition);
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class ConstBufferSequence>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, ConstBufferSequence const& buffers)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, write_at, offset, buffers);
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class ConstBufferSequence>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, ConstBufferSequence const& buffers, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, write_at, offset, buffers);
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class ConstBufferSequence, class CompletionCondition>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, ConstBufferSequence const& buffers, CompletionCondition condition)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, write_at, offset, buffers, condition);
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class ConstBufferSequence, class CompletionCondition>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, ConstBufferSequence const& buffers, CompletionCondition condition, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, write_at, offset, buffers, condition);
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class Allocator>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, write_at, offset, std::ref(buf));
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class Allocator>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, write_at, offset, std::ref(buf));
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class Allocator, class CompletionCondition>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf, CompletionCondition condition)
-    {
-        ACT_RETURN_FREE_AWAITER(std::size_t, device, write_at, offset, std::ref(buf), condition);
-    }
-
-    template<class AsyncRandomAccessWriteDevice, class Allocator, class CompletionCondition>
-    inline auto write_at(AsyncRandomAccessWriteDevice& device, std::uint64_t offset, basic_streambuf<Allocator>& buf, CompletionCondition condition, error_code& ec)
-    {
-        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, write_at, offset, std::ref(buf), condition);
+        ACT_RETURN_FREE_AWAITER_EC(std::size_t, device, write_at, offset, detail::fwd_buf<Buffer>(buf), condition);
     }
 }
 

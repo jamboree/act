@@ -10,7 +10,7 @@ act
 
 ## Dependencies
 
-- [Boost](http://www.boost.org/)
+- [Boost](http://www.boost.org/) > 1.66.0
 
 ## Example
 
@@ -25,7 +25,7 @@ task<void> session(asio::ip::tcp::socket sock)
         for ( ; ; )
         {
             act::error_code ec;
-            auto len = await act::read_some(sock, asio::buffer(buf), ec);
+            auto len = co_await act::read_some(sock, asio::buffer(buf), ec);
             if (ec == asio::error::eof)
                 co_return;
             co_await act::write(sock, asio::buffer(buf, len));
