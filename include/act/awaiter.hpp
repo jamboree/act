@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////////////////////////////////
-    Copyright (c) 2015-2017 Jamboree
+    Copyright (c) 2015-2018 Jamboree
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -49,6 +49,78 @@ namespace act { namespace detail
         static void report(error_code const&) {}
     };
 
+    template<class Expr, class T = void>
+    struct enable_if_valid
+    {
+        using type = T;
+    };
+
+    template<class T, class U = void>
+    using enable_if_valid_t = typename enable_if_valid<T, U>::type;
+
+    template<class T>
+    auto test_coroutine_handle(T t) -> enable_if_valid_t<decltype(T(t).destroy()), std::true_type>;
+    std::false_type test_coroutine_handle(...);
+
+    template<class CoroHandle>
+    struct continuation
+    {
+        continuation() noexcept : _ptr() {}
+
+        explicit continuation(CoroHandle handle) noexcept : _ptr(handle) {}
+
+        continuation(continuation&& other) noexcept : _ptr(other._ptr)
+        {
+            other._ptr = nullptr;
+        }
+
+        continuation& operator=(continuation&& other) noexcept
+        {
+            if (_ptr)
+                _ptr.destroy();
+            _ptr = other._ptr;
+            other._ptr = nullptr;
+            return *this;
+        }
+
+        ~continuation()
+        {
+            if (_ptr)
+                _ptr.destroy();
+        }
+
+        void operator()() noexcept
+        {
+            _ptr.resume();
+            _ptr = nullptr;
+        }
+
+    private:
+        CoroHandle _ptr;
+    };
+
+    template<bool is_handle>
+    struct cont_t
+    {
+        template<class T>
+        using wrap = continuation<T>;
+    };
+
+    template<>
+    struct cont_t<false>
+    {
+        template<class T>
+        using wrap = T&&;
+    };
+
+    template<class Coro>
+    inline decltype(auto) make_cont(Coro& coro)
+    {
+        static constexpr bool is_handle = decltype(test_coroutine_handle(coro))::value;
+        using cont = typename cont_t<is_handle>::template wrap<Coro>;
+        return static_cast<cont>(coro);
+    }
+
     template<class T, class Obj, class F, class Eh>
     struct awaiter
     {
@@ -62,14 +134,14 @@ namespace act { namespace detail
             return false;
         }
 
-        template<class Cb>
-        void await_suspend(Cb&& cb)
+        template<class Coro>
+        void await_suspend(Coro&& coro)
         {
-            _f(obj, [this, cb = std::move(cb)](error_code const& ec, T val) mutable
+            _f(obj, [this, cont = make_cont(coro)](error_code const& ec, T val) mutable
             {
                 _ec = ec;
                 _val = val;
-                cb();
+                cont();
             });
         }
 
@@ -92,13 +164,13 @@ namespace act { namespace detail
             return false;
         }
 
-        template<class Cb>
-        void await_suspend(Cb&& cb)
+        template<class Coro>
+        void await_suspend(Coro&& coro)
         {
-            _f(obj, [&_ec = _ec, cb = std::move(cb)](error_code const& ec) mutable
+            _f(obj, [&_ec = _ec, cont = make_cont(coro)](error_code const& ec) mutable
             {
                 _ec = ec;
-                cb();
+                cont();
             });
         }
 
