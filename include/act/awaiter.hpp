@@ -91,8 +91,14 @@ namespace act { namespace detail
 
         void operator()() noexcept
         {
-            _ptr.resume();
+            auto coro = _ptr;
             _ptr = nullptr;
+            coro.resume();
+        }
+
+        explicit operator bool() const noexcept
+        {
+            return _ptr.operator bool();
         }
 
     private:
